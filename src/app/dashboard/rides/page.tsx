@@ -30,7 +30,7 @@ export default function RidesPage() {
 
     const [rides, setRides] = useState<any[]>([]); // State to store fetched rides
     const [loader, setLoader] = useState<boolean>(true); // Loading state
-    const [ridesMonth, setRidesMonth] = useState<number>(0); // State to store rides requested this month
+  
     const stats = [
         {
             name: 'Total Rides',
