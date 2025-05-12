@@ -5,32 +5,17 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import {
-    UserGroupIcon,
     TruckIcon,
-    CurrencyDollarIcon,
-    ChartBarIcon,
     CheckBadgeIcon,
-    ClipboardDocumentCheckIcon,
-    CalendarDaysIcon,
     XCircleIcon,
+    ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
-
-
 
 export default function RidesPage() {
     const { loading } = useAuth();
+    const [rides, setRides] = useState<any[]>([]);
+    const [loader, setLoader] = useState<boolean>(true);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-            </div>
-        );
-    }
-
-    const [rides, setRides] = useState<any[]>([]); // State to store fetched rides
-    const [loader, setLoader] = useState<boolean>(true); // Loading state
-  
     const stats = [
         {
             name: 'Total Rides',
@@ -38,52 +23,55 @@ export default function RidesPage() {
             change: '+12.5%',
             changeType: 'increase',
             icon: ClipboardDocumentCheckIcon,
-        }, {
+        },
+        {
             name: 'Completed Rides',
             value: rides.filter(ride => ride.status === 'completed').length,
             change: '+6.7%',
             changeType: 'increase',
             icon: CheckBadgeIcon,
         },
-
         {
             name: 'Active Rides',
-            value:
-                rides.filter(ride => ride.status === 'pending').length,
+            value: rides.filter(ride => ride.status === 'pending').length,
             change: '+8.2%',
             changeType: 'increase',
             icon: TruckIcon,
         },
-
         {
-            name: 'Cancled Rides',
+            name: 'Cancelled Rides',
             value: rides.filter(ride => ride.status === 'cancelled').length,
             change: '+2.4%',
             changeType: 'increase',
             icon: XCircleIcon,
         },
     ];
+
     useEffect(() => {
-        // Fetch rides from Firestore
         const fetchRides = async () => {
             try {
-                const querySnapshot = await getDocs(collection(db, "rides")); // Specify the collection name
-                const ridesList = querySnapshot.docs.map((doc) => ({
+                const querySnapshot = await getDocs(collection(db, 'rides'));
+                const ridesList = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
                 }));
-                setRides(ridesList); // Set the state with the fetched rides
-                setLoader(false); // Set loading to false once data is fetched
-
-
+                setRides(ridesList);
+                setLoader(false);
             } catch (error) {
-                console.error("Error fetching rides: ", error);
+                console.error('Error fetching rides: ', error);
             }
         };
 
-        fetchRides(); // Call the fetch function when the component mounts
+        fetchRides();
     }, []);
 
+    if (loading || loader) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
+        );
+    }
 
     return (
         <DashboardLayout>
@@ -92,7 +80,7 @@ export default function RidesPage() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {stats.map((stat) => (
+                    {stats.map(stat => (
                         <div
                             key={stat.name}
                             className="relative flex flex-col justify-center overflow-hidden rounded-lg bg-white px-4 pb-2 pt-5 shadow sm:px-6 sm:pt-6"
@@ -108,8 +96,7 @@ export default function RidesPage() {
                             <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
                                 <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
                                 <p
-                                    className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                                        }`}
+                                    className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'}`}
                                 >
                                     {stat.change}
                                 </p>
@@ -118,54 +105,46 @@ export default function RidesPage() {
                     ))}
                 </div>
 
-                {/* Recent Activity */}
+                {/* Recent Activity Table */}
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">
-                            Recent Activity
-                        </h3>
+                        <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Activity</h3>
+
                         <div className="mt-5">
-                            <div className="flow-root">
-                                <ul role="list" className="-mb-8">
-                                    <div className='grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg'>
-
-                                        <li>Driver</li>
-                                        <li>Passenger</li>
-                                        <li>Category</li>
-                                        <li>Price</li>
-                                        <li>Pick up Location</li>
-                                        <li>Destination</li>
-                                        <li>Payment method</li>
-                                        <li>Status</li>
-                                    </div>
-                                    {rides.map((item, itemIdx) => (
-                                        <li key={item}>
-                                            <div className="relative pb-8">
-
-                                                <div className="relative flex space-x-3">
-
-
-                                                    <div className='grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] w-full px-4'>
-
-                                                        <div className='text-sm text-gray-500'>John Doe</div>
-                                                        <div className='text-sm text-gray-500'>Jane Smith</div>
-                                                        <div className='text-sm text-gray-500'>{item.ride_category.name}</div>
-                                                        <div className='text-sm text-gray-500'>{item.price}</div>
-                                                        <div className='text-sm text-gray-500' title={item.pickupLocation.description}>{item.pickupLocation.description.slice(0, 15)}</div>
-                                                        <div className='text-sm text-gray-500' title={item.dropoffLocation.description}>{item.dropoffLocation.description.slice(0, 15)}</div>
-                                                        <div className='text-sm text-gray-500'>{item.paymentMethod}</div>
-                                                        <div className='text-sm text-gray-500'>{item.status}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <div className="grid grid-cols-8 text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg">
+                                <span>Driver</span>
+                                <span>Passenger</span>
+                                <span>Category</span>
+                                <span>Price</span>
+                                <span>Pickup</span>
+                                <span>Dropoff</span>
+                                <span>Payment</span>
+                                <span>Status</span>
                             </div>
+
+                            {rides.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="grid grid-cols-8 text-sm text-gray-700 px-4 py-2 border-b mb-3"
+                                >
+                                    <span>{item.driverName || 'John Doe'}</span>
+                                    <span>{item.passengerName || 'Jane Smith'}</span>
+                                    <span>{item.ride_category?.name || 'N/A'}</span>
+                                    <span>{item.price || 'N/A'}</span>
+                                    <span title={item.pickupLocation?.description}>
+                                        {item.pickupLocation?.description?.slice(0, 15) || 'N/A'}
+                                    </span>
+                                    <span title={item.dropoffLocation?.description}>
+                                        {item.dropoffLocation?.description?.slice(0, 15) || 'N/A'}
+                                    </span>
+                                    <span>{item.paymentMethod || 'N/A'}</span>
+                                    <span>{item.status || 'N/A'}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
         </DashboardLayout>
     );
-} 
+}

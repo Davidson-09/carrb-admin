@@ -9,6 +9,7 @@ import {
     TruckIcon,
     CheckBadgeIcon,
     UserCircleIcon,
+    XCircleIcon,
 } from '@heroicons/react/24/outline';
 
 export default function RidesPage() {
@@ -118,39 +119,41 @@ export default function RidesPage() {
 
                 {/* Popup with user details */}
                 {popped && selectedUser && (
-                    <div className="fixed border top-10 right-10 z-50 bg-white text-black h-[90%] w-[80%] p-6 rounded shadow overflow-y-scroll">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-semibold">User Details</h2>
-                            <button
-                                onClick={() => {
-                                    setPopped(false);
-                                    setSelectedUser(null);
-                                }}
-                                className="ml-4 text-white bg-red-500 hover:bg-red-700 px-3 py-1 rounded"
-                            >
-                                Close
-                            </button>
-                        </div>
+                    <div className="flex justify-center items-center h-[100%] w-full">
+                        <div className="fixed border top-30 z-50 bg-white text-black h-[70%] w-[70%] p-6 rounded shadow overflow-y-scroll">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-semibold">User Details</h2>
+                                <button
+                                    onClick={() => {
+                                        setPopped(false);
+                                        setSelectedUser(null);
+                                    }}
+                                    className="ml-4 text-white bg-red-500 hover:bg-red-700 px-3 py-1 rounded"
+                                >
+                                    <XCircleIcon height={'25px'} />
+                                </button>
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Detail label="Full Name" value={`${selectedUser.firstName} ${selectedUser.lastName}`} />
-                            <Detail label="Email" value={selectedUser.email} />
-                            <Detail label="Phone Number" value={selectedUser.phoneNumber} />
-                            <Detail label="Account Type" value={selectedUser.accountType} />
-                            <Detail label="Account Status" value={selectedUser.accountStatus} />
-                            <Detail label="Address" value={selectedUser.address} />
-                            <Detail label="City" value={selectedUser.city} />
-                            <Detail label="Language" value={selectedUser.language} />
-                            <Detail label="Referral Code" value={selectedUser.referralCode} />
-                            <Detail label="Driver License" value={selectedUser.driverLicense} />
-                            <Detail label="License Plate" value={selectedUser.licensePlate} />
-                            <Detail label="National ID" value={selectedUser.nationalId} />
-                            <Detail label="Vehicle Manufacturer" value={selectedUser.vehicleManufacturer} />
-                            <Detail label="Vehicle Color" value={selectedUser.vehicleColor} />
-                            <Detail label="Score" value={selectedUser.score} />
-                            <Detail label="Bank Name" value={selectedUser.paymentInfo?.bankName} />
-                            <Detail label="Account Number" value={selectedUser.paymentInfo?.accountNumber} />
-                            <Detail label="Name on Account" value={selectedUser.paymentInfo?.nameOnAccount} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Detail label="Full Name" value={`${selectedUser.firstName} ${selectedUser.lastName}`} />
+                                <Detail label="Email" value={selectedUser.email} />
+                                <Detail label="Phone Number" value={selectedUser.phoneNumber} />
+                                <Detail label="Account Type" value={selectedUser.accountType} />
+                                <Detail label="Account Status" value={selectedUser.accountStatus} />
+                                <Detail label="Address" value={selectedUser.address} />
+                                <Detail label="City" value={selectedUser.city} />
+                                <Detail label="Language" value={selectedUser.language} />
+                                <Detail label="Referral Code" value={selectedUser.referralCode} />
+                                <Detail label="Driver License" value={selectedUser.driverLicense} />
+                                <Detail label="License Plate" value={selectedUser.licensePlate} />
+                                <Detail label="National ID" value={selectedUser.nationalId} />
+                                <Detail label="Vehicle Manufacturer" value={selectedUser.vehicleManufacturer} />
+                                <Detail label="Vehicle Color" value={selectedUser.vehicleColor} />
+                                <Detail label="Score" value={selectedUser.score} />
+                                <Detail label="Bank Name" value={selectedUser.paymentInfo?.bankName} />
+                                <Detail label="Account Number" value={selectedUser.paymentInfo?.accountNumber} />
+                                <Detail label="Name on Account" value={selectedUser.paymentInfo?.nameOnAccount} />
+                            </div>
                         </div>
                     </div>
                 )}
@@ -214,8 +217,8 @@ export default function RidesPage() {
 function Detail({ label, value }: { label: string; value: any }) {
     return (
         <div>
-            <p className="text-sm font-medium text-gray-500">{label}</p>
-            <p className="text-lg text-gray-800">{value || '—'}</p>
+            <p className="text-xs font-medium text-gray-500">{label}</p>
+            <p className="text-sm text-gray-800">{value || '—'}</p>
         </div>
     );
 }
