@@ -192,7 +192,8 @@ export default function DashboardPage() {
                                   Ride <span className="font-medium text-gray-900">{activity.status}</span>{' '}
                                   from <span className="font-medium">{activity.pickupLocation?.description}</span>{' '}
                                   to <span className="font-medium">{activity.dropoffLocation?.description}</span>{' '}
-                                  by <span className="font-medium">{activity.passengerId}</span>
+                                  by <span className="font-medium">{activity.passengerId}</span>{' '} <br />
+                                  <span className='font-semibold text-black'>Driver is</span> <span className="font-medium">{activity.driverId}</span>
                                 </p>
                               ) : (
                                 <p className="text-sm text-gray-500">

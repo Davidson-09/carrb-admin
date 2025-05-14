@@ -131,8 +131,8 @@ export default function RidesPage() {
                         </h3>
 
                         <div className="mt-5">
-                            <div className="grid grid-cols-12 text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg">
-                                <span className='col-span-3'>Driver ID</span>
+                            <div className="grid grid-cols-13 text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg">
+                                <span className='col-span-4'>Driver & Passenger IDs</span>
                                 <span>Category</span>
                                 <span>Price (NGN)</span>
                                 <span className='col-span-2'>Pickup</span>
@@ -145,9 +145,9 @@ export default function RidesPage() {
                             {rides.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="grid grid-cols-12 text-sm text-gray-700 px-4 py-2 border-b mb-3 items-center"
+                                    className="grid grid-cols-13 text-sm text-gray-700 px-4 py-2 border-b mb-3 items-center"
                                 >
-                                    <span className='col-span-3'>{item.driverId}</span>
+                                    <span className='col-span-4'>Driver: {item.driverId} <br /> Passenger: {item.passengerId}</span>
                                     <span>{item.ride_category?.name || 'N/A'}</span>
                                     <span>{item.price || 'N/A'}</span>
                                     <span className='col-span-2' title={item.pickupLocation?.description}>
