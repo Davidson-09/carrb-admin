@@ -70,9 +70,15 @@ export default function RidesPage() {
         fetchUsers();
     }, []);
 
-    const filteredUsers = users.filter(user =>
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = users.filter(user => {
+        const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+        const userId = user.id?.toLowerCase();
+        return (
+            fullName.includes(searchQuery.toLowerCase()) ||
+            userId?.includes(searchQuery.toLowerCase())
+        );
+    });
+
 
     if (loading || loader) {
         return (

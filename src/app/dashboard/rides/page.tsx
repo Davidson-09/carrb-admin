@@ -1,6 +1,6 @@
 'use client';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
@@ -26,21 +26,21 @@ export default function RidesPage() {
         },
         {
             name: 'Completed Rides',
-            value: rides.filter(ride => ride.status === 'completed').length,
+            value: rides.filter((ride) => ride.status === 'completed').length,
             change: '+6.7%',
             changeType: 'increase',
             icon: CheckBadgeIcon,
         },
         {
             name: 'Active Rides',
-            value: rides.filter(ride => ride.status === 'pending').length,
+            value: rides.filter((ride) => ride.status === 'pending').length,
             change: '+8.2%',
             changeType: 'increase',
             icon: TruckIcon,
         },
         {
             name: 'Cancelled Rides',
-            value: rides.filter(ride => ride.status === 'cancelled').length,
+            value: rides.filter((ride) => ride.status === 'cancelled').length,
             change: '+2.4%',
             changeType: 'increase',
             icon: XCircleIcon,
@@ -51,7 +51,7 @@ export default function RidesPage() {
         const fetchRides = async () => {
             try {
                 const querySnapshot = await getDocs(collection(db, 'rides'));
-                const ridesList = querySnapshot.docs.map(doc => ({
+                const ridesList = querySnapshot.docs.map((doc) => ({
                     id: doc.id,
                     ...doc.data(),
                 }));
@@ -64,6 +64,21 @@ export default function RidesPage() {
 
         fetchRides();
     }, []);
+
+    const handleCancelRide = async (rideId: string) => {
+        try {
+            const rideRef = doc(db, 'rides', rideId);
+            await updateDoc(rideRef, { status: 'cancelled' });
+            setRides((prev) =>
+                prev.map((ride) =>
+                    ride.id === rideId ? { ...ride, status: 'cancelled' } : ride
+                )
+            );
+        } catch (error) {
+            console.error('Error cancelling ride:', error);
+            alert('Failed to cancel the ride.');
+        }
+    };
 
     if (loading || loader) {
         return (
@@ -80,7 +95,7 @@ export default function RidesPage() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    {stats.map(stat => (
+                    {stats.map((stat) => (
                         <div
                             key={stat.name}
                             className="relative flex flex-col justify-center overflow-hidden rounded-lg bg-white px-4 pb-2 pt-5 shadow sm:px-6 sm:pt-6"
@@ -96,7 +111,10 @@ export default function RidesPage() {
                             <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
                                 <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
                                 <p
-                                    className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'}`}
+                                    className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === 'increase'
+                                        ? 'text-green-600'
+                                        : 'text-red-600'
+                                        }`}
                                 >
                                     {stat.change}
                                 </p>
@@ -108,37 +126,56 @@ export default function RidesPage() {
                 {/* Recent Activity Table */}
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Activity</h3>
+                        <h3 className="text-lg font-medium leading-6 text-gray-900">
+                            Recent Activity
+                        </h3>
 
                         <div className="mt-5">
-                            <div className="grid grid-cols-8 text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg">
-                                <span>Driver</span>
-                                <span>Passenger</span>
+                            <div className="grid grid-cols-12 text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg">
+                                <span className='col-span-3'>Driver ID</span>
                                 <span>Category</span>
-                                <span>Price</span>
-                                <span>Pickup</span>
-                                <span>Dropoff</span>
+                                <span>Price (NGN)</span>
+                                <span className='col-span-2'>Pickup</span>
+                                <span className='col-span-2'>Dropoff</span>
                                 <span>Payment</span>
                                 <span>Status</span>
+                                <span>Action</span>
                             </div>
 
                             {rides.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="grid grid-cols-8 text-sm text-gray-700 px-4 py-2 border-b mb-3"
+                                    className="grid grid-cols-12 text-sm text-gray-700 px-4 py-2 border-b mb-3 items-center"
                                 >
-                                    <span>{item.driverName || 'John Doe'}</span>
-                                    <span>{item.passengerName || 'Jane Smith'}</span>
+                                    <span className='col-span-3'>{item.driverId}</span>
                                     <span>{item.ride_category?.name || 'N/A'}</span>
                                     <span>{item.price || 'N/A'}</span>
-                                    <span title={item.pickupLocation?.description}>
+                                    <span className='col-span-2' title={item.pickupLocation?.description}>
                                         {item.pickupLocation?.description?.slice(0, 15) || 'N/A'}
                                     </span>
-                                    <span title={item.dropoffLocation?.description}>
+                                    <span className='col-span-2' title={item.dropoffLocation?.description}>
                                         {item.dropoffLocation?.description?.slice(0, 15) || 'N/A'}
                                     </span>
                                     <span>{item.paymentMethod || 'N/A'}</span>
                                     <span>{item.status || 'N/A'}</span>
+                                    <span>
+                                        {item.status !== 'cancelled' && item.status !== 'completed' ? (
+                                            <button
+                                                onClick={() => handleCancelRide(item.id)}
+                                                className="text-red-600 bg-red-200 p-1 rounded  hover:text-red-800 text-xs"
+                                            >
+                                                Cancel
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => { alert('Ride already completed or cancelled') }}
+
+                                                className="text-red-600 bg-red-200 p-1 rounded hover:text-red-800 text-xs"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </span>
                                 </div>
                             ))}
                         </div>
