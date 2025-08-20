@@ -15,6 +15,8 @@ export default function RidesPage() {
     const { loading } = useAuth();
     const [rides, setRides] = useState<any[]>([]);
     const [loader, setLoader] = useState<boolean>(true);
+    const [rideStatusFilter, setRideStatusFilter] = useState<'all' | 'completed' | 'cancelled' | 'pending'>('all');
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all'); // <-- Added
 
     const stats = [
         {
@@ -80,6 +82,16 @@ export default function RidesPage() {
         }
     };
 
+    // Get unique payment methods for dropdown
+    const paymentMethods = Array.from(new Set(rides.map(r => r.paymentMethod).filter(Boolean)));
+
+    // Filter rides by status and payment method
+    const filteredRides = rides.filter((ride) => {
+        const statusMatch = rideStatusFilter === 'all' ? true : ride.status === rideStatusFilter;
+        const paymentMatch = paymentMethodFilter === 'all' ? true : ride.paymentMethod === paymentMethodFilter;
+        return statusMatch && paymentMatch;
+    });
+
     if (loading || loader) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -126,9 +138,33 @@ export default function RidesPage() {
                 {/* Recent Activity Table */}
                 <div className="bg-white shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg font-medium leading-6 text-gray-900">
-                            Recent Activity
-                        </h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium leading-6 text-gray-900">
+                                Recent Activity
+                            </h3>
+                            <div className="flex gap-2">
+                                <select
+                                    value={rideStatusFilter}
+                                    onChange={e => setRideStatusFilter(e.target.value as 'all' | 'completed' | 'cancelled' | 'pending')}
+                                    className="border border-black text-black rounded-lg px-3 py-2"
+                                >
+                                    <option value="all">All Statuses</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <select
+                                    value={paymentMethodFilter}
+                                    onChange={e => setPaymentMethodFilter(e.target.value)}
+                                    className="border border-black text-black rounded-lg px-3 py-2"
+                                >
+                                    <option value="all">All Payments</option>
+                                    {paymentMethods.map((method) => (
+                                        <option key={method} value={method}>{method}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
 
                         <div className="mt-5">
                             <div className="grid grid-cols-13 text-black bg-gray-100 font-bold text-sm my-4 py-2 px-4 rounded-lg">
@@ -142,7 +178,7 @@ export default function RidesPage() {
                                 <span>Action</span>
                             </div>
 
-                            {rides.map((item) => (
+                            {filteredRides.map((item) => (
                                 <div
                                     key={item.id}
                                     className="grid grid-cols-13 text-sm text-gray-700 px-4 py-2 border-b mb-3 items-center"

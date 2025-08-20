@@ -20,6 +20,7 @@ export default function RidesPage() {
     const [popped, setPopped] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'driver' | 'rider'>('all');
 
     const stats = [
         {
@@ -73,12 +74,13 @@ export default function RidesPage() {
     const filteredUsers = users.filter(user => {
         const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
         const userId = user.id?.toLowerCase();
-        return (
+        const matchesSearch =
             fullName.includes(searchQuery.toLowerCase()) ||
-            userId?.includes(searchQuery.toLowerCase())
-        );
+            userId?.includes(searchQuery.toLowerCase());
+        const matchesType =
+            userTypeFilter === 'all' ? true : user.accountType === userTypeFilter;
+        return matchesSearch && matchesType;
     });
-
 
     if (loading || loader) {
         return (
@@ -169,13 +171,24 @@ export default function RidesPage() {
                     <div className="px-4 py-5 sm:p-6">
                         <div className="flex justify-between mb-4">
                             <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Activity</h3>
-                            <input
-                                type="search"
-                                placeholder="Search users..."
-                                className="border rounded-lg px-3 py-2 w-72"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                            <div className="flex gap-2">
+                                <input
+                                    type="search"
+                                    placeholder="Search users..."
+                                    className="border border-black text-black rounded-lg px-3 py-2 w-72"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                <select
+                                    value={userTypeFilter}
+                                    onChange={e => setUserTypeFilter(e.target.value as 'all' | 'driver' | 'rider')}
+                                    className="border border-black text-black  rounded-lg px-3 py-2"
+                                >
+                                    <option value="all">All</option>
+                                    <option value="driver">Drivers</option>
+                                    <option value="rider">Riders</option>
+                                </select>
+                            </div>
                         </div>
 
                         <ul role="list" className="space-y-2">

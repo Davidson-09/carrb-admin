@@ -68,12 +68,29 @@ export default function DashboardPage() {
                 ]);
 
                 const usersList = usersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-                const ridesList = ridesSnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    type: 'ride',
-                    timestamp: doc.data().requestedAt?.toDate ? doc.data().requestedAt.toDate().getTime() : Date.now(),
-                    ...doc.data(),
-                }));
+
+                // FIX: Ensure ride timestamp is always a valid number (milliseconds)
+                const ridesList = ridesSnapshot.docs.map((doc) => {
+                    const data = doc.data();
+                    let timestamp = Date.now();
+                    if (data.requestedAt?.toDate) {
+                        timestamp = data.requestedAt.toDate().getTime();
+                    } else if (data.requestedAt instanceof Date) {
+                        timestamp = data.requestedAt.getTime();
+                    } else if (typeof data.requestedAt === 'number') {
+                        timestamp = data.requestedAt;
+                    } else if (typeof data.requestedAt === 'string') {
+                        const parsed = Date.parse(data.requestedAt);
+                        timestamp = isNaN(parsed) ? Date.now() : parsed;
+                    }
+                    return {
+                        id: doc.id,
+                        type: 'ride',
+                        timestamp,
+                        ...data,
+                    };
+                });
+
                 const transactionsList = transactionsSnapshot.docs.map((doc) => ({
                     id: doc.id,
                     type: 'transaction',
@@ -124,40 +141,46 @@ export default function DashboardPage() {
     const filteredUsers = useMemo(() => getFilteredData(users, 'createdAt'), [users, getFilteredData]);
 
 
-    // --- Calculate Dashboard Stats (Using filtered data) ---
-    const totalRides = filteredRides.length;
-    const completedRides = filteredRides.filter((ride) => ride.status === 'completed').length;
-    const activeRides = filteredRides.filter((ride) => ride.status === 'pending').length;
-    const cancelledRides = filteredRides.filter((ride) => ride.status === 'cancelled').length;
-    const rideCompletionRate = totalRides === 0 ? 0 : (completedRides / totalRides) * 100;
+    // --- Calculate Dashboard Stats (NOT filtered, always global) ---
+    const globalTotalUsers = users.length;
+    const globalActiveRides = rides.filter((ride) => ride.status === 'pending').length;
+    const globalCompletedRides = rides.filter((ride) => ride.status === 'completed').length;
+    const globalCancelledRides = rides.filter((ride) => ride.status === 'cancelled').length;
+    const globalTotalRides = rides.length;
+    const globalRideCompletionRate = globalTotalRides === 0 ? 0 : (globalCompletedRides / globalTotalRides) * 100;
+    const globalTotalRevenue = transactions.reduce((acc, txn) => acc + (txn.amount || 0), 0) / 100;
 
-    const totalRevenue = filteredTransactions.reduce((acc, txn) => acc + (txn.amount || 0), 0) / 100;
+    // --- Calculate Filtered Ride Completion Rate (for chart section) ---
+    const filteredRideCompletionRate = filteredRides.length === 0
+        ? 0
+        : (filteredRides.filter((ride) => ride.status === 'completed').length / filteredRides.length) * 100;
 
+    // --- Stats Grid (top of page, always global) ---
     const stats = [
         {
             name: 'Total Users',
-            value: filteredUsers.length.toLocaleString(),
+            value: globalTotalUsers.toLocaleString(),
             change: '+12.5%',
             changeType: 'increase',
             icon: UserGroupIcon,
         },
         {
             name: 'Active Rides',
-            value: activeRides.toLocaleString(),
+            value: globalActiveRides.toLocaleString(),
             change: '+8.2%',
             changeType: 'increase',
             icon: TruckIcon,
         },
         {
             name: 'Total Revenue',
-            value: `₦${totalRevenue.toLocaleString()}`,
+            value: `₦${globalTotalRevenue.toLocaleString()}`,
             change: '+15.3%',
             changeType: 'increase',
             icon: CurrencyDollarIcon,
         },
         {
             name: 'Ride Completion Rate',
-            value: `${rideCompletionRate.toFixed(2)}%`,
+            value: `${globalRideCompletionRate.toFixed(2)}%`,
             change: '+2.4%',
             changeType: 'increase',
             icon: ChartBarIcon,
@@ -169,6 +192,10 @@ export default function DashboardPage() {
         [filteredRides, filteredTransactions]);
 
     // --- Chart Data Preparation (Now sensitive to granularity) ---
+    const completedRides = filteredRides.filter(r => r.status === 'completed').length;
+    const activeRides = filteredRides.filter(r => r.status === 'pending').length;
+    const cancelledRides = filteredRides.filter(r => r.status === 'cancelled').length;
+
     const rideStatusData = useMemo(() => ({
         labels: ['Completed', 'Pending', 'Cancelled'],
         datasets: [
@@ -184,7 +211,8 @@ export default function DashboardPage() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
+            legend:
+            {
                 position: 'top' as const,
             },
             title: {
@@ -342,97 +370,7 @@ export default function DashboardPage() {
     return (
         <DashboardLayout>
             <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-900 mb-4 sm:mb-0">Admin Analytics</h1>
-
-                    <div className="flex items-center space-x-3 flex-wrap gap-2"> {/* Added flex-wrap and gap */}
-                        {/* Granularity Selector */}
-                        <div className="relative inline-block text-left">
-                            <select
-                                id="granularity"
-                                name="granularity"
-                                className="block w-full rounded-md border-black bg-white text-black py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                                value={granularity}
-                                onChange={(e) => setGranularity(e.target.value as Granularity)}
-                            >
-                                <option value="day">Daily</option>
-                                <option value="month">Monthly</option>
-                                <option value="year">Annually</option>
-                            </select>
-                        </div>
-
-                        {/* Start Date Picker Button */}
-                        <div className="relative">
-                            <button
-                                onClick={() => { setIsFromPickerOpen(!isFromPickerOpen); setIsToPickerOpen(false); }} // Close other picker
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {from ? format(from, 'PPP') : 'Select Start Date'}
-                            </button>
-                            {isFromPickerOpen && (
-                                <div className="absolute right-0 mt-2 z-10 bg-white border border-gray-300 rounded-md shadow-lg p-4">
-                                    <DayPicker
-                                        mode="single"
-                                        selected={from}
-                                        onSelect={(date) => {
-                                            setFrom(date);
-                                            setIsFromPickerOpen(false); // Close picker after selection
-                                        }}
-                                        // Ensure the 'to' date is not earlier than 'from' date
-                                        toDate={to || new Date()} // Prevent selecting a start date after the current end date
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* End Date Picker Button */}
-                        <div className="relative">
-                            <button
-                                onClick={() => { setIsToPickerOpen(!isToPickerOpen); setIsFromPickerOpen(false); }} // Close other picker
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {to ? format(to, 'PPP') : 'Select End Date'}
-                            </button>
-                            {isToPickerOpen && (
-                                <div className="absolute right-0 mt-2 z-10 bg-white border border-gray-300 rounded-md shadow-lg p-4">
-                                    <DayPicker
-                                        mode="single"
-                                        selected={to}
-                                        onSelect={(date) => {
-                                            setTo(date);
-                                            setIsToPickerOpen(false); // Close picker after selection
-                                        }}
-                                        // Ensure the 'from' date is not later than 'to' date
-                                        fromDate={from || subDays(new Date(), 365 * 10)} // Prevent selecting an end date before the current start date (arbitrary past date)
-                                    />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Reset Dates Button */}
-                        {(from && to && (from.getTime() !== subDays(new Date(), 29).getTime() || to.getTime() !== new Date().getTime())) && ( // Only show reset if not default
-                            <button
-                                onClick={() => {
-                                    setFrom(subDays(new Date(), 29));
-                                    setTo(new Date());
-                                    setIsFromPickerOpen(false);
-                                    setIsToPickerOpen(false);
-                                }}
-                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                                Reset Dates
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Stats Grid - Remains the same, uses filtered data */}
+                {/* Stats Grid - Always global */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     {stats.map((stat) => (
                         <div
@@ -457,7 +395,65 @@ export default function DashboardPage() {
                     ))}
                 </div>
 
-                {/* Charts Section - Remains sensitive to granularity and filtered data */}
+                {/* --- Date Range & Granularity Filters --- */}
+                <div className="flex flex-wrap gap-4  mb-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+                        <button
+                            className="hover:border shadow text-black px-3 py-2 rounded bg-white"
+                            onClick={() => setIsFromPickerOpen((v) => !v)}
+                        >
+                            {from ? format(from, 'yyyy-MM-dd') : 'Select'}
+                        </button>
+                        {isFromPickerOpen && (
+                            <div className="absolute text-black p-3 z-10 bg-white shadow-lg rounded mt-2">
+                                <DayPicker
+                                    mode="single"
+                                    selected={from}
+                                    onSelect={(date) => {
+                                        setFrom(date || undefined);
+                                        setIsFromPickerOpen(false);
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                        <button
+                            className="hover:border shadow text-black  px-3 py-2 rounded bg-white"
+                            onClick={() => setIsToPickerOpen((v) => !v)}
+                        >
+                            {to ? format(to, 'yyyy-MM-dd') : 'Select'}
+                        </button>
+                        {isToPickerOpen && (
+                            <div className="absolute text-black p-3 z-10 bg-white shadow-lg rounded mt-2">
+                                <DayPicker
+                                    mode="single"
+                                    selected={to}
+                                    onSelect={(date) => {
+                                        setTo(date || undefined);
+                                        setIsToPickerOpen(false);
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Granularity</label>
+                        <select
+                            value={granularity}
+                            onChange={e => setGranularity(e.target.value as Granularity)}
+                            className="border shadow text-black px-3 py-2 rounded bg-white"
+                        >
+                            <option value="day">Daily</option>
+                            <option value="month">Monthly</option>
+                            <option value="year">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Charts Section */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Daily Rides Chart */}
                     <div className="bg-white shadow rounded-lg p-4">
@@ -476,6 +472,15 @@ export default function DashboardPage() {
                             Ride Status Distribution
                         </h3>
                         <DynamicRideStatusDoughnutChart data={rideStatusData} options={rideStatusOptions} />
+                        {/* Filtered Ride Completion Rate */}
+                        <div className="mt-6">
+                            <div className="bg-gray-50 rounded-lg px-4 py-3 flex items-center">
+                                <ChartBarIcon className="h-6 w-6 text-indigo-500 mr-2" />
+                                <span className="text-lg font-semibold text-gray-900">
+                                    Ride Completion Rate (Filtered): {filteredRideCompletionRate.toFixed(2)}%
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Revenue Over Time Chart */}
@@ -569,7 +574,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
-
             </div>
         </DashboardLayout>
     );

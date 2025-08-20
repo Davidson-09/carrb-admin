@@ -12,11 +12,16 @@ import {
   TruckIcon,
   ChartBarIcon,
   CogIcon,
+  UserCircleIcon,
+  NewspaperIcon,
+  BanknotesIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { auth } from '@/lib/firebase/config';
 import { signOut } from 'firebase/auth';
 import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
+import { group } from 'console';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -24,6 +29,9 @@ const navigation = [
   { name: 'Rides', href: '/dashboard/rides', icon: TruckIcon },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
+  { name: 'Campaigns', href: '/dashboard/campaigns', icon: InformationCircleIcon },
+  { name: 'News', href: '/dashboard/news', icon: NewspaperIcon },
+  { name: 'Withdrawal requests', href: '/dashboard/withdraw', icon: BanknotesIcon },
 ];
 
 export default function DashboardLayout({
@@ -62,16 +70,14 @@ export default function DashboardLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  isActive
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
+                className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${isActive
+                  ? 'bg-gray-100 text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
               >
                 <item.icon
-                  className={`mr-4 h-6 w-6 flex-shrink-0 ${
-                    isActive ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500'
-                  }`}
+                  className={`mr-4 h-6 w-6 flex-shrink-0 ${isActive ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500'
+                    }`}
                 />
                 {item.name}
               </Link>
@@ -89,6 +95,14 @@ export default function DashboardLayout({
               {navigation.find((item) => item.href === pathname)?.name || 'Dashboard'}
             </h2>
             <div className="flex items-center">
+              <div>
+                <Link href="/dashboard/profile" passHref>
+                  <UserCircleIcon
+                    height={'34px'}
+                    className="text-black pr-1 cursor-pointer"
+                  />
+                </Link>
+              </div>
               <span className="mr-4 text-sm text-gray-700">{user?.email}</span>
               <button
                 onClick={handleLogout}
