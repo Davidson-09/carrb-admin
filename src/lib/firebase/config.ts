@@ -2,6 +2,8 @@ import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getMessaging, isSupported } from 'firebase/messaging';
+import { getStorage } from "firebase/storage";
+
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -29,7 +31,7 @@ try {
 // Initialize Firebase services
 const auth = getAuth(app);
 const db = getFirestore(app);
-
+const storage = getStorage(app);
 // Initialize messaging only on the client side and if supported
 let messaging = null;
 if (typeof window !== 'undefined') {
@@ -40,4 +42,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { app, auth, db, messaging }; 
+export { app, auth, db, messaging, storage }; 

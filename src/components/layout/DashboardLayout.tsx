@@ -16,6 +16,7 @@ import {
   NewspaperIcon,
   BanknotesIcon,
   InformationCircleIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { auth } from '@/lib/firebase/config';
 import { signOut } from 'firebase/auth';
@@ -28,10 +29,11 @@ const navigation = [
   { name: 'Users', href: '/dashboard/users', icon: UserGroupIcon },
   { name: 'Rides', href: '/dashboard/rides', icon: TruckIcon },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },
-  { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   { name: 'Campaigns', href: '/dashboard/campaigns', icon: InformationCircleIcon },
   { name: 'News', href: '/dashboard/news', icon: NewspaperIcon },
+  { name: 'Transactions', href: '/dashboard/transactions', icon: CurrencyDollarIcon },
   { name: 'Withdrawal requests', href: '/dashboard/withdraw', icon: BanknotesIcon },
+  { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
 ];
 
 export default function DashboardLayout({
