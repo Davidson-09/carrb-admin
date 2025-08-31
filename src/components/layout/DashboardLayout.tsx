@@ -29,9 +29,9 @@ const navigation = [
   { name: 'Users', href: '/dashboard/users', icon: UserGroupIcon },
   { name: 'Rides', href: '/dashboard/rides', icon: TruckIcon },
   { name: 'Analytics', href: '/dashboard/analytics', icon: ChartBarIcon },
-  { name: 'Campaigns', href: '/dashboard/campaigns', icon: InformationCircleIcon },
+  // { name: 'Campaigns', href: '/dashboard/campaigns', icon: InformationCircleIcon },
   { name: 'News', href: '/dashboard/news', icon: NewspaperIcon },
-  { name: 'Transactions', href: '/dashboard/transactions', icon: CurrencyDollarIcon },
+  // { name: 'Transactions', href: '/dashboard/transactions', icon: CurrencyDollarIcon },
   { name: 'Withdrawal requests', href: '/dashboard/withdraw', icon: BanknotesIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
 ];
@@ -86,6 +86,12 @@ export default function DashboardLayout({
             );
           })}
         </nav>
+        <button
+          onClick={handleLogout}
+          className="rounded bg-red-600 px-3 py-2 w-[90%] mx-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 absolute bottom-8"
+        >
+          Logout
+        </button>
       </div>
 
       {/* Main content */}
@@ -106,12 +112,7 @@ export default function DashboardLayout({
                 </Link>
               </div>
               <span className="mr-4 text-sm text-gray-700">{user?.email}</span>
-              <button
-                onClick={handleLogout}
-                className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
-              >
-                Logout
-              </button>
+
             </div>
           </div>
         </header>
